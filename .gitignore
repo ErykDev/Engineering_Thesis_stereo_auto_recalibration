@@ -6,6 +6,13 @@ __pycache__/
 # C extensions
 *.so
 
+
+automatic_recalibration_grayscale/model.ckpt
+
+Calibration_Code_Charuko/__pycache__/
+
+stereo_kalibracja*
+
 # Distribution / packaging
 .Python
 build/
