@@ -17,20 +17,12 @@ def isRotationMatrix(R) :
     n = np.linalg.norm(I - shouldBeIdentity)
     return n < 1e-6
 
-#w, h = 1920, 1200
 def recalculare_rotation(org_left_img_gray, org_right_img_gray, model, device, camera_coeff, size):
     image0 = org_left_img_gray
     image1 = org_right_img_gray
 
     if camera_coeff.Type == 'pinhole':
         mapx1, mapy1, mapx2, mapy2 = stereoRectifyInitUndistortRectifyMapPinhole(camera_coeff, size)
-
-    if camera_coeff.Type == 'fisheye':
-        mapx1, mapy1, mapx2, mapy2 = stereoRectifyInitUndistortRectifyMapFisheye(camera_coeff, size)
-
-
-    image0 = cv2.remap(image0, mapx1, mapy1, cv2.INTER_LINEAR)
-    image1 = cv2.remap(image1, mapx2, mapy2, cv2.INTER_LINEAR)
 
     image0, inp0, scales0 = resize_imgs_to_tensor(image0, device, size, 0, False)
     image1, inp1, scales1 = resize_imgs_to_tensor(image1, device, size, 0, False)

@@ -1,9 +1,6 @@
 import cv2
 import numpy as np
 
-def Average(lst):
-    return sum(lst) / len(lst)
-
 class ConnectionInteface:
     # method for initializing Network
    
@@ -105,4 +102,4 @@ def stereoRectifyInitUndistortRectifyMapPinhole(camera_coeff, size):
         cv2.CV_32FC1
     )
 
-    return mapx1, mapy1, mapx2, mapy2, P1
+    return mapx1, mapy1, mapx2, mapy2, P1, R1, P2, R2
