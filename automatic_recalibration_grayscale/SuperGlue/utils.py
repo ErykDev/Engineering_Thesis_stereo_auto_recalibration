@@ -26,7 +26,6 @@ def process_resize(w, h, resize):
 
     return w_new, h_new
 
-
 def resize_imgs_to_tensor(image, device, resize, rotation, resize_float):
     if image is None:
         return None, None, None
@@ -47,51 +46,8 @@ def resize_imgs_to_tensor(image, device, resize, rotation, resize_float):
     inp = frame2tensor(image, device)
     return image, inp, scales
 
-
-def read_image(path, device, resize, rotation, resize_float, K, K_optimal, D):
-    image = read_UYVY_bgr(path, 1920, 1200) #cv2.imread(str(path), cv2.IMREAD_GRAYSCALE)
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
-    #image = undistort_pinhole_image(image, K, K_optimal, D)
-
-    if image is None:
-        return None, None, None
-    w, h = image.shape[1], image.shape[0]
-    w_new, h_new = process_resize(w, h, resize)
-    scales = (float(w) / float(w_new), float(h) / float(h_new))
-
-    if resize_float:
-        image = cv2.resize(image.astype('float32'), (w_new, h_new))
-    else:
-        image = cv2.resize(image, (w_new, h_new)).astype('float32')
-
-    if rotation != 0:
-        image = np.rot90(image, k=rotation)
-        if rotation % 2:
-            scales = scales[::-1]
-
-    inp = frame2tensor(image, device)
-    return image, inp, scales
-
-def angle_bettwen_points(x1, x2, y1, y2):
-    angle_rad = math.atan2(abs(y2-y1), abs(x2-x1))
-
-    return math.degrees(angle_rad)
-
 def Average(lst):
     return sum(lst) / len(lst)
-
-
-def read_UYVY_grayscale(path, width, height):
-    with open(path, "rb") as src_file:
-        raw_data = np.fromfile(src_file, dtype=np.uint8, count=width*height*2)
-        return raw_data.reshape(height, width, 2)[0]
-
-def read_UYVY_bgr(path, width, height):
-    with open(path, "rb") as src_file:
-        raw_data = np.fromfile(src_file, dtype=np.uint8, count=width*height*2)
-        im = raw_data.reshape(height, width, 2)
-        return cv2.cvtColor(im, cv2.COLOR_YUV2BGR_Y422)
 
 def get_optimal_camera_matrix(K, Dist, img_width, img_height):
     K1, _ = cv2.getOptimalNewCameraMatrix(
@@ -99,5 +55,77 @@ def get_optimal_camera_matrix(K, Dist, img_width, img_height):
 	
     return K1
 
-def undistort_pinhole_image(image, camera_matrix, optimal_cameramatrix, dist_coeffs):
-    return cv2.undistort(image, camera_matrix, dist_coeffs, None, optimal_cameramatrix)
+
+
+def make_matching_plot_fast(image0, image1, kpts0, kpts1, mkpts0,
+                            mkpts1, color, text, path=None,
+                            show_keypoints=False, margin=10,
+                            opencv_display=False, opencv_title='',
+                            small_text=[]):
+    H0, W0 = image0.shape
+    H1, W1 = image1.shape
+    H, W = max(H0, H1), W0 + W1 + margin
+
+    out = 255*np.ones((H, W), np.uint8)
+    out[:H0, :W0] = image0
+    out[:H1, W0+margin:] = image1
+    out = np.stack([out]*3, -1)
+
+    if show_keypoints:
+        kpts0, kpts1 = np.round(kpts0).astype(int), np.round(kpts1).astype(int)
+        white = (255, 255, 255)
+        black = (0, 0, 0)
+        for x, y in kpts0:
+            cv2.circle(out, (x, y), 2, black, -1, lineType=cv2.LINE_AA)
+            cv2.circle(out, (x, y), 1, white, -1, lineType=cv2.LINE_AA)
+        for x, y in kpts1:
+            cv2.circle(out, (x + margin + W0, y), 2, black, -1,
+                       lineType=cv2.LINE_AA)
+            cv2.circle(out, (x + margin + W0, y), 1, white, -1,
+                       lineType=cv2.LINE_AA)
+
+    mkpts0, mkpts1 = np.round(mkpts0).astype(int), np.round(mkpts1).astype(int)
+    color = (np.array(color[:, :3])*255).astype(int)[:, ::-1]
+    for (x0, y0), (x1, y1), c in zip(mkpts0, mkpts1, color):
+        c = c.tolist()
+        cv2.line(out, (x0, y0), (x1 + margin + W0, y1),
+                 color=c, thickness=1, lineType=cv2.LINE_AA)
+        # display line end-points as circles
+        cv2.circle(out, (x0, y0), 2, c, -1, lineType=cv2.LINE_AA)
+        cv2.circle(out, (x1 + margin + W0, y1), 2, c, -1,
+                   lineType=cv2.LINE_AA)
+
+    # Scale factor for consistent visualization across scales.
+    sc = min(H / 640., 2.0)
+
+    # Big text.
+    Ht = int(30 * sc)  # text height
+    txt_color_fg = (255, 255, 255)
+    txt_color_bg = (0, 0, 0)
+    for i, t in enumerate(text):
+        cv2.putText(out, t, (int(8*sc), Ht*(i+1)), cv2.FONT_HERSHEY_DUPLEX,
+                    1.0*sc, txt_color_bg, 2, cv2.LINE_AA)
+        cv2.putText(out, t, (int(8*sc), Ht*(i+1)), cv2.FONT_HERSHEY_DUPLEX,
+                    1.0*sc, txt_color_fg, 1, cv2.LINE_AA)
+
+    # Small text.
+    Ht = int(18 * sc)  # text height
+    for i, t in enumerate(reversed(small_text)):
+        cv2.putText(out, t, (int(8*sc), int(H-Ht*(i+.6))), cv2.FONT_HERSHEY_DUPLEX,
+                    0.5*sc, txt_color_bg, 2, cv2.LINE_AA)
+        cv2.putText(out, t, (int(8*sc), int(H-Ht*(i+.6))), cv2.FONT_HERSHEY_DUPLEX,
+                    0.5*sc, txt_color_fg, 1, cv2.LINE_AA)
+
+    if path is not None:
+        cv2.imwrite(str(path), out)
+
+    if opencv_display:
+        cv2.imshow(opencv_title, out)
+        cv2.waitKey(1)
+
+    return out
+
+
+def error_colormap(x):
+    return np.clip(
+        np.stack([2-x*2, x*2, np.zeros_like(x), np.ones_like(x)], -1), 0, 1)

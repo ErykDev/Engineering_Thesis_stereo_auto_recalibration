@@ -18,7 +18,7 @@ parser.add_argument('--threshold', type=float, default=0.2,
 parser.add_argument('--difficulty_mulitpl', type=int, default=50,
                     help='detection quality threshold')
 
-parser.add_argument('--save_path', default="./",
+parser.add_argument('--save_path', default="./../",
                     help='path to save frames')
 
 parser.add_argument('--camera_ids', nargs='+', type=int, default=(2,4),
@@ -255,14 +255,14 @@ def main():
                             print("error: {}".format(ret))
 
 
-                            np.savetxt('Intrinsic_mtx_1.txt', M1)
-                            np.savetxt('Intrinsic_mtx_2.txt', M2)
+                            np.savetxt(kalib_folder + 'Intrinsic_mtx_1.txt', M1)
+                            np.savetxt(kalib_folder + 'Intrinsic_mtx_2.txt', M2)
 
-                            np.savetxt('dist_1.txt', d1)
-                            np.savetxt('dist_2.txt', d2)
+                            np.savetxt(kalib_folder + 'dist_1.txt', d1)
+                            np.savetxt(kalib_folder + 'dist_2.txt', d2)
 
-                            np.savetxt('R.txt', R)
-                            np.savetxt('T.txt', T)
+                            np.savetxt(kalib_folder + 'R.txt', R)
+                            np.savetxt(kalib_folder + 'T.txt', T)
 
 
         decimator+=1

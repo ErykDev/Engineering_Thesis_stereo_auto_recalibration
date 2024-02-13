@@ -2,10 +2,10 @@ import cv2
 import argparse
 import time
 
+import copy
+
 from SuperGlue.models.matching import Matching
 from client_utils import *
-from datasets import __datasets__
-from models import __models__
 from SuperGlue.scoring_module import score_match, draw_matches
 from SuperGlue.recalibration_module import recalculare_rotation
 from utils import *
@@ -26,11 +26,11 @@ class Counter:
 
 class Max_Counter(Counter):
     def __init__(self, start = 1, max = 300):
-        Counter.__init__(start=start)
+        Counter.__init__(self, start=start)
         self.max = max
 
     def increment(self):
-        Counter.increment()
+        super().increment()
         
         if self.count >= self.max:
             self.reset()
@@ -39,10 +39,10 @@ class Max_Counter(Counter):
 class FPS(Counter):
     def __init__(self, start_time = time.time()):
         self.start_time = start_time
-        Counter.__init__(start=0)
+        Counter.__init__(self, start=0)
 
     def update(self):
-        Counter.increment()
+        super().increment()
 
     def calculate(self):
         return self.count / (time.time() - self.start_time)
@@ -88,7 +88,7 @@ def setupCam(cam, w, h):
 
 parser = argparse.ArgumentParser(description='agx video server')
 
-parser.add_argument('--pinhole_conf_path', type=str, default='./pinhole/',
+parser.add_argument('--pinhole_conf_path', type=str, default='./../stereo_kalibracja_13_02_2024/',
                     help='pinhole (cam 2/3) coof')
 
 parser.add_argument('--camera_ids', nargs='+', type=int, default=(2,4),
@@ -141,10 +141,11 @@ def evaluate_and_correct_camera_coeff(left_frame, right_frame, size, lock):
 
     if recalibrate:
         new_R = recalculare_rotation(left_frame, right_frame, matcher, device, pinhole_set_coeff, size)
+
+        copy_pinhole_set_coeff = copy.deepcopy(pinhole_set_coeff)
+        copy_pinhole_set_coeff.R = new_R
     
-        new_score = score_match(left_frame, right_frame, matcher, device, device, 
-            CameraCoeff(pinhole_set_coeff.K1, pinhole_set_coeff.K2, pinhole_set_coeff.D1, 
-                        pinhole_set_coeff.D2, new_R, pinhole_set_coeff.T, pinhole_set_coeff.Type), size)
+        new_score = score_match(left_frame, right_frame, matcher, device, device, copy_pinhole_set_coeff, size)
 
         if new_score < last_scores.average():
             last_scores.reset()
@@ -200,6 +201,9 @@ while(True):
 
  
 
+    
+    print(counter.count)
+
     if (counter.count == evaluation_interval):
         print("starting recalibration process")
         Thread(target = evaluate_and_correct_camera_coeff, args =(l_gray_frame, r_gray_frame, pinhole_set_coeff, (w, h), lock)).start()
@@ -217,8 +221,19 @@ while(True):
 
 
 
+
+
     fps.update()
     print("FPS: ", fps.calculate())
+
+                               
+    frame = cv2.hconcat((l_frame_remaped, r_frame_remaped))
+    #print(frame.shape)
+    #frame = cv2.resize(frame, (int(frame.shape[1]/ 1.8), int(frame.shape[0]/ 1.8)))
+
+    # Display the resulting frame
+    cv2.imshow('View Display',  frame)
+
 
     k = cv2.waitKey(1) # wait for key press
     if(k%256 == ord('q')):

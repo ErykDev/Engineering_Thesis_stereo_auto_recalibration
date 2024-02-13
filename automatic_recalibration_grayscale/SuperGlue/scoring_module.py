@@ -1,13 +1,15 @@
 import torch
 import cv2
 import numpy as np
+import matplotlib.cm as cm
+
+from threading import Lock
 
 
-from SuperGlue.utils import resize_imgs_to_tensor
+from SuperGlue.utils import make_matching_plot_fast, resize_imgs_to_tensor
 
 from client_utils import stereoRectifyInitUndistortRectifyMapPinhole
 
-torch.set_grad_enabled(False)
 
 
 
@@ -34,14 +36,8 @@ def score_match(org_left_img_gray, org_right_img_gray, model, device, camera_coe
     mkpts0 = kpts0[valid]
     mkpts1 = kpts1[matches[valid]]
 
-    diffs_y = []
-    
-    for point1, point2 in zip(mkpts0, mkpts1):
-        y1 = point1[1]
-        y2 = point2[1]
-        diffs_y.append(abs(y2- y1))
-
-    return sum(diffs_y) / len(diffs_y)
+    diffs_y = np.abs(mkpts1[:, 1] - mkpts0[:, 1])
+    return np.mean(diffs_y)
 
 
 def draw_matches(org_left_img_gray, org_right_img_gray, model, device, camera_coeff, size):
@@ -70,5 +66,18 @@ def draw_matches(org_left_img_gray, org_right_img_gray, model, device, camera_co
     mkpts0 = kpts0[valid]
     mkpts1 = kpts1[matches[valid]]
 
-    imMatches = cv2.drawMatches(image0, mkpts0, image1, mkpts1, matches, None)
-    cv2.imwrite("matches.png", imMatches)
+    mconf = conf[valid]
+
+    print('saving image')
+
+    text = [
+                'SuperGlue',
+                'Keypoints: {}:{}'.format(len(kpts0), len(kpts1)),
+                'Matches: {}'.format(len(mkpts0)),
+            ]
+    
+    color = cm.jet(mconf)
+
+    out = make_matching_plot_fast(image0=image0, image1=image1, kpts0=kpts0, kpts1=kpts1, mkpts0=mkpts0, mkpts1=mkpts1, color=color, text=text)
+
+    cv2.imwrite("/home/eryk-dev/Desktop/Engineering_Thesis_stereo_auto_recalibration/matches.png", out)
