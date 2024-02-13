@@ -3,12 +3,7 @@ import torch
 
 import cv2
 
-from client_utils import stereoRectifyInitUndistortRectifyMapPinhole, stereoRectifyInitUndistortRectifyMapFisheye
-
 from SuperGlue.utils import resize_imgs_to_tensor
-
-torch.set_grad_enabled(False)
-
 
 def isRotationMatrix(R) :
     Rt = np.transpose(R)
@@ -20,9 +15,6 @@ def isRotationMatrix(R) :
 def recalculare_rotation(org_left_img_gray, org_right_img_gray, model, device, camera_coeff, size):
     image0 = org_left_img_gray
     image1 = org_right_img_gray
-
-    if camera_coeff.Type == 'pinhole':
-        mapx1, mapy1, mapx2, mapy2 = stereoRectifyInitUndistortRectifyMapPinhole(camera_coeff, size)
 
     image0, inp0, scales0 = resize_imgs_to_tensor(image0, device, size, 0, False)
     image1, inp1, scales1 = resize_imgs_to_tensor(image1, device, size, 0, False)
