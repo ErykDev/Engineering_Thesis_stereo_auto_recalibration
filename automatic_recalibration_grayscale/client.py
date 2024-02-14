@@ -183,4 +183,13 @@ while(True):
     if(k%256 == ord('q')):
         break
     if(k%256 == ord('m')):
-        draw_matches(frame_left_gray, frame_right_gray, matcher, device, stereo_module_coeff, (w, h))
+        kpts0, kpts1, mkpts0, mkpts1, conf, mconf = get_matched_fetures_super_glue(frame_left_gray, 
+                                                         frame_right_gray, 
+                                                         matcher, 
+                                                         device, 
+                                                         stereo_module_coeff, 
+                                                         (w, h), 
+                                                         lock)
+        
+        out = draw_matches(frame_left_gray, frame_right_gray, kpts0, kpts1, mkpts0, mkpts1, mconf, stereo_module_coeff, (w, h))
+        cv2.imwrite("matches.png", out)
