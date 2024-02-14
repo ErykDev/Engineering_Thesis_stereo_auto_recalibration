@@ -46,16 +46,11 @@ def resize_imgs_to_tensor(image, device, resize, rotation, resize_float):
     inp = frame2tensor(image, device)
     return image, inp, scales
 
-def Average(lst):
-    return sum(lst) / len(lst)
-
 def get_optimal_camera_matrix(K, Dist, img_width, img_height):
     K1, _ = cv2.getOptimalNewCameraMatrix(
 	K, Dist, (img_width, img_height), 0, (img_width, img_height))
 	
     return K1
-
-
 
 def make_matching_plot_fast(image0, image1, kpts0, kpts1, mkpts0,
                             mkpts1, color, text, path=None,

@@ -51,7 +51,7 @@ def rescale_camera_matrix(camera_matrix, org_width, new_width):
     return new_cam_matrix
 
 
-def stereoRectifyInitUndistortRectifyMapFisheye(camera_coeff, size):
+def stereo_rectify_map_fisheye(camera_coeff, size):
     R1 = np.zeros(shape=(3,3))
     R2 = np.zeros(shape=(3,3))
     P1 = np.zeros(shape=(3,4))
@@ -79,15 +79,23 @@ def stereoRectifyInitUndistortRectifyMapFisheye(camera_coeff, size):
         size,
         cv2.CV_16SC2
     )
-    return mapx1, mapy1, mapx2, mapy2, P1
+    return mapx1, mapy1, mapx2, mapy2, P1, R1, P2, R2
 
-def stereoRectifyInitUndistortRectifyMapPinhole(camera_coeff, size):
+def stereo_rectify_map(camera_coeff, size):
     R1 = np.zeros(shape=(3,3))
     R2 = np.zeros(shape=(3,3))
     P1 = np.zeros(shape=(3,4))
     P2 = np.zeros(shape=(3,4))
 
-    cv2.stereoRectify(camera_coeff.K1, camera_coeff.D1, camera_coeff.K2, camera_coeff.D2, size, camera_coeff.R, camera_coeff.T, R1, R2, P1, P2, alpha=0.0, flags=cv2.CALIB_ZERO_DISPARITY)
+    cv2.stereoRectify(camera_coeff.K1, 
+                      camera_coeff.D1, 
+                      camera_coeff.K2, 
+                      camera_coeff.D2, 
+                      size, 
+                      camera_coeff.R, 
+                      camera_coeff.T, 
+                      R1, R2, P1, P2, alpha=0.0, 
+                      flags=cv2.CALIB_ZERO_DISPARITY)
 
     mapx1, mapy1 = cv2.initUndistortRectifyMap(
         camera_coeff.K1, camera_coeff.D1,

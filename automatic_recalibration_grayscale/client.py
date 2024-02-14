@@ -36,16 +36,20 @@ class Max_Counter(Counter):
             self.reset()
 
    
-class FPS(Counter):
-    def __init__(self, start_time = time.time()):
-        self.start_time = start_time
-        Counter.__init__(self, start=0)
-
+class FPS():
+    def __init__(self, pooling_size = 200):
+        self.scores = Scores(pooling_size)
+        self.start_time = time.time()
+        
     def update(self):
-        super().increment()
+        self.scores.append(1./(time.time() - self.start_time))
+        self.reset()
+
+    def reset(self):
+        self.start_time = time.time()
 
     def calculate(self):
-        return self.count / (time.time() - self.start_time)
+        return self.scores.average()
         #print("FPS: ", counter / (time.time() - start_time))
 
 class Scores:
@@ -102,14 +106,19 @@ args = parser.parse_args()
 
 DOWNSCALE_RATIO = 2
 
-pinhole_set_coeff = load_camera_coeff(args.pinhole_conf_path, 'pinhole')
+stereo_module_coeff = load_camera_coeff(args.pinhole_conf_path, 'pinhole')
 
 original_width = args.cameras_frame_shape[0]
+original_height = args.cameras_frame_shape[1]
 
-pinhole_set_coeff.K1 = rescale_camera_matrix(pinhole_set_coeff.K1, original_width, original_width/DOWNSCALE_RATIO)
-pinhole_set_coeff.K2 = rescale_camera_matrix(pinhole_set_coeff.K2, original_width, original_width/DOWNSCALE_RATIO)
+stereo_module_coeff.K1 = rescale_camera_matrix(stereo_module_coeff.K1, 
+                                               original_width, 
+                                               original_width/DOWNSCALE_RATIO)
+stereo_module_coeff.K2 = rescale_camera_matrix(stereo_module_coeff.K2, 
+                                               original_width, 
+                                               original_width/DOWNSCALE_RATIO)
 
-h, w, = int(args.cameras_frame_shape[1]/ DOWNSCALE_RATIO), int(original_width/DOWNSCALE_RATIO)
+h, w, = int(original_height/DOWNSCALE_RATIO), int(original_width/DOWNSCALE_RATIO)
 
 # Load the SuperPoint and SuperGlue models.
 device = 'cpu'
@@ -128,10 +137,11 @@ matcher = Matching({
     }
 }).eval().to(device)
 
-def evaluate_and_correct_camera_coeff(left_frame, right_frame, size, lock):
-    global last_scores, mapx1, mapy1, mapx2, mapy2, pinhole_set_coeff
 
-    score = score_match(left_frame, right_frame, matcher, device, pinhole_set_coeff, size)
+def evaluate_and_correct_camera_coeff(left_frame, right_frame, size, lock):
+    global last_scores, mapx1, mapy1, mapx2, mapy2, stereo_module_coeff
+
+    score = score_match(left_frame, right_frame, matcher, device, stereo_module_coeff, size)
 
     print("score: " + str(score))
 
@@ -140,36 +150,36 @@ def evaluate_and_correct_camera_coeff(left_frame, right_frame, size, lock):
     recalibrate = len(last_scores) == 10 and last_scores.average() > 5.0
 
     if recalibrate:
-        new_R = recalculare_rotation(left_frame, right_frame, matcher, device, pinhole_set_coeff, size)
+        new_R = recalculare_rotation(left_frame, right_frame, matcher, device, stereo_module_coeff, size)
 
-        copy_pinhole_set_coeff = copy.deepcopy(pinhole_set_coeff)
-        copy_pinhole_set_coeff.R = new_R
+        copy_stereo_module_coeff = copy.deepcopy(stereo_module_coeff)
+        copy_stereo_module_coeff.R = new_R
     
-        new_score = score_match(left_frame, right_frame, matcher, device, device, copy_pinhole_set_coeff, size)
+        new_score = score_match(left_frame, right_frame, matcher, device, device, copy_stereo_module_coeff, size)
 
         if new_score < last_scores.average():
             last_scores.reset()
 
-            print('Updating ' + pinhole_set_coeff.Type + ' Coeff')
+            print('Updating ' + stereo_module_coeff.Type + ' Coeff')
 
 
             # Lock for updatating projection matrices
             lock.acquire()
 
-            pinhole_set_coeff.R =  new_R
-            mapx1, mapy1, mapx2, mapy2, _,_,_,_ = stereoRectifyInitUndistortRectifyMapPinhole(pinhole_set_coeff (w, h))
+            stereo_module_coeff.R =  new_R
+            mapx1, mapy1, mapx2, mapy2, _,_,_,_ = stereo_rectify_map(stereo_module_coeff (w, h))
 
             lock.release()
     #else:
     #    print('No need to recalibrate ' + camera_coeff.Type)
 
-mapx1_p, mapy1_p, mapx2_p, mapy2_p, _, _, _, _ = stereoRectifyInitUndistortRectifyMapPinhole(pinhole_set_coeff, (w, h))
+mapx1_p, mapy1_p, mapx2_p, mapy2_p, _, _, _, _ = stereo_rectify_map(stereo_module_coeff, (w, h))
 
 left_cam = cv2.VideoCapture(args.camera_ids[0])
 right_cam = cv2.VideoCapture(args.camera_ids[1])
 
-setupCam(left_cam, args.cameras_frame_shape[0],  args.cameras_frame_shape[1])
-setupCam(right_cam, args.cameras_frame_shape[0],  args.cameras_frame_shape[1])
+setupCam(left_cam,  original_width, original_height)
+setupCam(right_cam, original_width, original_height)
 
 evaluation_interval = 500
 
@@ -177,7 +187,7 @@ lock = Lock()
 counter = Max_Counter(start=1, max=evaluation_interval + 1)
 last_scores = Scores(max_length=10)
 
-fps = FPS(start_time=time.time())
+fps = FPS(pooling_size=200)
 
 while(True):   
     
@@ -199,17 +209,12 @@ while(True):
     l_gray_frame = cv2.cvtColor(frame_left, cv2.COLOR_BGR2GRAY)
     r_gray_frame = cv2.cvtColor(frame_right, cv2.COLOR_BGR2GRAY)
 
- 
-
-    
-    print(counter.count)
 
     if (counter.count == evaluation_interval):
         print("starting recalibration process")
-        Thread(target = evaluate_and_correct_camera_coeff, args =(l_gray_frame, r_gray_frame, pinhole_set_coeff, (w, h), lock)).start()
+        Thread(target = evaluate_and_correct_camera_coeff, args =(l_gray_frame, r_gray_frame, stereo_module_coeff, (w, h), lock)).start()
 
 
-    
     # Lock for accesing projection matrices
     lock.acquire()
     
@@ -220,12 +225,8 @@ while(True):
     lock.release()
 
 
-
-
-
     fps.update()
     print("FPS: ", fps.calculate())
-
                                
     frame = cv2.hconcat((l_frame_remaped, r_frame_remaped))
     #print(frame.shape)
@@ -239,4 +240,4 @@ while(True):
     if(k%256 == ord('q')):
         break
     if(k%256 == ord('m')):
-        draw_matches(l_gray_frame, r_gray_frame, matcher, device, pinhole_set_coeff, (w, h))
+        draw_matches(l_gray_frame, r_gray_frame, matcher, device, stereo_module_coeff, (w, h))

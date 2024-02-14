@@ -8,7 +8,7 @@ from threading import Lock
 
 from SuperGlue.utils import make_matching_plot_fast, resize_imgs_to_tensor
 
-from client_utils import stereoRectifyInitUndistortRectifyMapPinhole
+from client_utils import stereo_rectify_map
 
 
 
@@ -17,7 +17,7 @@ def score_match(org_left_img_gray, org_right_img_gray, model, device, camera_coe
     image0 = org_left_img_gray
     image1 = org_right_img_gray
 
-    mapx1, mapy1, mapx2, mapy2, _, _, _, _ = stereoRectifyInitUndistortRectifyMapPinhole(camera_coeff, size)
+    mapx1, mapy1, mapx2, mapy2, _, _, _, _ = stereo_rectify_map(camera_coeff, size)
 
     image0 = cv2.remap(image0, mapx1, mapy1, cv2.INTER_LINEAR)
     image1 = cv2.remap(image1, mapx2, mapy2, cv2.INTER_LINEAR)
@@ -44,16 +44,13 @@ def draw_matches(org_left_img_gray, org_right_img_gray, model, device, camera_co
     image0 = org_left_img_gray
     image1 = org_right_img_gray
 
-
-    mapx1, mapy1, mapx2, mapy2, _, _, _, _ = stereoRectifyInitUndistortRectifyMapPinhole(camera_coeff, size)
-
+    mapx1, mapy1, mapx2, mapy2, _, _, _, _ = stereo_rectify_map(camera_coeff, size)
 
     image0 = cv2.remap(image0, mapx1, mapy1, cv2.INTER_LINEAR)
     image1 = cv2.remap(image1, mapx2, mapy2, cv2.INTER_LINEAR)
 
     image0, inp0, scales0 = resize_imgs_to_tensor(image0, device, size, 0, False)
     image1, inp1, scales1 = resize_imgs_to_tensor(image1, device, size, 0, False)
-
 
     # Perform the matching.
     pred = model({'image0': inp0, 'image1': inp1})
@@ -71,13 +68,16 @@ def draw_matches(org_left_img_gray, org_right_img_gray, model, device, camera_co
     print('saving image')
 
     text = [
-                'SuperGlue',
-                'Keypoints: {}:{}'.format(len(kpts0), len(kpts1)),
-                'Matches: {}'.format(len(mkpts0)),
+        'SuperGlue',
+        'Keypoints: {}:{}'.format(len(kpts0), len(kpts1)),
+        'Matches: {}'.format(len(mkpts0)),
             ]
     
     color = cm.jet(mconf)
 
-    out = make_matching_plot_fast(image0=image0, image1=image1, kpts0=kpts0, kpts1=kpts1, mkpts0=mkpts0, mkpts1=mkpts1, color=color, text=text)
+    out = make_matching_plot_fast(image0=image0, image1=image1, 
+                                  kpts0=kpts0, kpts1=kpts1, 
+                                  mkpts0=mkpts0, mkpts1=mkpts1, 
+                                  color=color, text=text)
 
-    cv2.imwrite("/home/eryk-dev/Desktop/Engineering_Thesis_stereo_auto_recalibration/matches.png", out)
+    cv2.imwrite("matches.png", out)
