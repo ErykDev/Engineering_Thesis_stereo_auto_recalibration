@@ -1,4 +1,5 @@
 import cv2
+import time
 import numpy as np
 
 class ConnectionInteface:
@@ -49,7 +50,6 @@ def rescale_camera_matrix(camera_matrix, org_width, new_width):
     new_cam_matrix[2][2] = 1
 
     return new_cam_matrix
-
 
 def stereo_rectify_map_fisheye(camera_coeff, size):
     R1 = np.zeros(shape=(3,3))
@@ -111,3 +111,78 @@ def stereo_rectify_map(camera_coeff, size):
     )
 
     return mapx1, mapy1, mapx2, mapy2, P1, R1, P2, R2
+
+class Counter:
+    def __init__(self, start = 1):
+        self.start = start
+        self.count = self.start
+
+    def increment(self):
+        self.count = self.count + 1
+      
+    def reset(self):
+        self.count = 0
+
+class Max_Counter(Counter):
+    def __init__(self, start = 1, max = 300):
+        Counter.__init__(self, start=start)
+        self.max = max
+
+    def increment(self):
+        super().increment()
+        
+        if self.count >= self.max:
+            self.reset()
+
+class FPS():
+    def __init__(self, pooling_size = 200):
+        self.scores = Scores(pooling_size)
+        self.start_time = time.time()
+        
+    def update(self):
+        self.scores.append(1./(time.time() - self.start_time))
+        self.reset()
+
+    def reset(self):
+        self.start_time = time.time()
+
+    def calculate(self):
+        return self.scores.average()
+        #print("FPS: ", counter / (time.time() - start_time))
+
+class Scores:
+    def __init__(self, max_length= 10):
+        self.scores = []
+        self.max_length = max_length
+
+    def append(self, score):
+        self.scores.insert(0, score)
+
+        if(len(self.scores) >= self.max_length):
+            self.scores = self.scores[:-1]
+
+    def reset(self):
+        self.scores = []
+    
+    def average(self):
+        return sum(self.scores) / len(self.scores)
+    
+    def __len__(self):
+        return len(self.scores)
+
+def setupCam(cam, w, h):
+    cam.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'))
+    print('setting camera')
+
+    time.sleep(1)
+
+    print('setting resolution')
+    cam.set(cv2.CAP_PROP_FRAME_WIDTH, w)
+
+    time.sleep(1)
+
+    cam.set(cv2.CAP_PROP_FRAME_HEIGHT, h)
+    time.sleep(1)
+
+    print('setting fps speed')
+    cam.set(cv2.CAP_PROP_FPS, 30.000)
