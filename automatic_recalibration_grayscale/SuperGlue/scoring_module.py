@@ -16,14 +16,9 @@ def score_match(mkpts0, mkpts1):
     return np.mean(diffs_y)
 
 
-def draw_matches(org_left_img_gray, org_right_img_gray, kpts0, kpts1, mkpts0, mkpts1, mconf, camera_coeff, size):
+def draw_matches(org_left_img_gray, org_right_img_gray, kpts0, kpts1, mkpts0, mkpts1, mconf):
     image0 = org_left_img_gray
     image1 = org_right_img_gray
-
-    mapx1, mapy1, mapx2, mapy2, _, _, _, _ = stereo_rectify_map(camera_coeff, size)
-
-    image0 = cv2.remap(image0, mapx1, mapy1, cv2.INTER_LINEAR)
-    image1 = cv2.remap(image1, mapx2, mapy2, cv2.INTER_LINEAR)
 
     text = [
         'SuperGlue',

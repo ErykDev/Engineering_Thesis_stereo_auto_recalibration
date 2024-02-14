@@ -164,8 +164,8 @@ while(True):
     lock.acquire()
     
     # pinhole_frames
-    l_frame_remaped = cv2.remap(frame_left, mapx1, mapy1, cv2.INTER_LINEAR)
-    r_frame_remaped = cv2.remap(frame_right, mapx2, mapy2, cv2.INTER_LINEAR)
+    frame_left_remaped = cv2.remap(frame_left, mapx1, mapy1, cv2.INTER_LINEAR)
+    frame_right_remaped = cv2.remap(frame_right, mapx2, mapy2, cv2.INTER_LINEAR)
 
     lock.release()
 
@@ -173,7 +173,7 @@ while(True):
     fps.update()
     print("FPS: ", fps.calculate())
                                
-    frame = cv2.hconcat((l_frame_remaped, r_frame_remaped))
+    frame = cv2.hconcat((frame_left_remaped, frame_right_remaped))
     #frame = cv2.resize(frame, (int(frame.shape[1]/ 1.8), int(frame.shape[0]/ 1.8)))
 
     # Display the resulting frame
@@ -191,5 +191,5 @@ while(True):
                                                          (w, h), 
                                                          lock)
         
-        out = draw_matches(frame_left_gray, frame_right_gray, kpts0, kpts1, mkpts0, mkpts1, mconf, stereo_module_coeff, (w, h))
+        out = draw_matches(frame_left_remaped, frame_right_remaped, kpts0, kpts1, mkpts0, mkpts1, mconf)
         cv2.imwrite("matches.png", out)
