@@ -2,9 +2,6 @@ import numpy as np
 
 import cv2
 
-from SuperGlue.utils import resize_imgs_to_tensor
-from automatic_recalibration_grayscale.client_utils import stereo_rectify_map
-
 def isRotationMatrix(R) :
     Rt = np.transpose(R)
     shouldBeIdentity = np.dot(Rt, R)
@@ -38,10 +35,6 @@ def estimate_pose(kpts0, kpts1, K0, K1, thresh, conf=0.99999):
             ret = (R, t[:, 0], mask.ravel() > 0)
     return ret
 
-
-
-
-
 def calculate_rotation(mkpts0, mkpts1, camera_coeff):
     # Calculate rotation matrix from matches
     homography, mask = cv2.findHomography(mkpts0, mkpts1, cv2.RANSAC, 5.0)
@@ -53,9 +46,8 @@ def calculate_rotation(mkpts0, mkpts1, camera_coeff):
     #print('recalculated rotation')
     #print(f'rool {rool} pich {pitch} yaw {yaw}')
 
-    R_rec = np.dot(camera_coeff.R, Rs[0])
+    R = np.dot(camera_coeff.R, Rs[0])
 
-    assert isRotationMatrix(R_rec)
+    assert isRotationMatrix(R)
 
-    return R_rec
-
+    return R

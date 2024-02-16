@@ -13,7 +13,7 @@ from utils import *
 from threading import Thread, Lock
 
 
-parser = argparse.ArgumentParser(description='agx video server')
+parser = argparse.ArgumentParser(description='camera client')
 
 parser.add_argument('--pinhole_conf_path', type=str, default='./../stereo_kalibracja_13_02_2024/',
                     help='pinhole (cam 2/3) coof')
@@ -54,7 +54,7 @@ matcher = Matching({
         'max_keypoints': 200
     },
     'superglue': {
-        'weights': 'outdoor',
+        'weights': 'indoor',
         'sinkhorn_iterations': 20,
         'match_threshold': 0.2,
     }
@@ -80,10 +80,10 @@ def evaluate_and_correct_camera_coeff(left_frame, right_frame, size, lock):
     last_scores.append(score)
 
     if len(last_scores) == 10 and last_scores.average() > 5.0:
-        new_R = calculate_rotation(left_frame, right_frame, matcher, device, stereo_module_coeff, size)
+        R = calculate_rotation(left_frame, right_frame, matcher, device, stereo_module_coeff, size)
 
         copy_stereo_module_coeff = copy.deepcopy(stereo_module_coeff)
-        copy_stereo_module_coeff.R = new_R
+        copy_stereo_module_coeff.R = R
 
 
         _, _, mkpts0, mkpts1, _, _ = get_matched_fetures_super_glue(left_frame, 
@@ -99,13 +99,13 @@ def evaluate_and_correct_camera_coeff(left_frame, right_frame, size, lock):
         if new_score < last_scores.average():
             last_scores.reset()
 
-            print('Updating ' + stereo_module_coeff.Type + ' Coeff')
+            print('Updating Projection Matrices')
 
 
             # Lock for updatating projection matrices
             lock.acquire()
 
-            stereo_module_coeff.R =  new_R
+            stereo_module_coeff.R = R
             mapx1, mapy1, mapx2, mapy2, _,_,_,_ = stereo_rectify_map(stereo_module_coeff (w, h))
 
             lock.release()
@@ -191,5 +191,5 @@ while(True):
                                                          (w, h), 
                                                          lock)
         
-        out = draw_matches(frame_left_remaped, frame_right_remaped, kpts0, kpts1, mkpts0, mkpts1, mconf)
+        out = draw_matches(frame_left_remaped, frame_right_remaped, kpts0, kpts1, mkpts0, mkpts1, mconf, 'SuperGlue')
         cv2.imwrite("matches.png", out)
