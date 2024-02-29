@@ -30,6 +30,8 @@ parser.add_argument('--cameras_frame_shape', nargs='+', type=int, default=(1600,
 parser.add_argument('--board_shape', nargs='+', type=int, default=(7, 5),
                     help='expected board shape')
 
+parser.add_argument("--calculate", help="make calculation insted of just collecting")
+
 parser.add_argument('--checker_size_mm', type=int, default=38,
                     help='expected board shape')
 
@@ -180,11 +182,12 @@ def main():
                             print('right')
                             print(compute_goodenough(db_right, args.difficulty_mulitpl))
                             print('')
-
-
                 
                         if(collected_frames > 90 and collected_frames % 10 == 0):
                             collected_frames += 1 
+
+                            if(not args.calculate):
+                                break
 
                             print("CAMERA CALIBRATION")
 
