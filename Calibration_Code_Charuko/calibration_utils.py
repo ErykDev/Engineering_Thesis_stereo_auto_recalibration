@@ -198,7 +198,9 @@ def getSharedFetures(CornersLeft, IdsLeft, CornersRight, IdsRight, board):
 
 
 def setupCam(cam, w, h):
-    cam.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'))
+    # Set the desired pixel format (YUY2)
+    cam.set(cv2.CAP_PROP_CONVERT_RGB, 0)
+    cam.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'YUY2'))
     print('setting camera')
 
     time.sleep(1)

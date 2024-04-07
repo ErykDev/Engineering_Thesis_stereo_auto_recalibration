@@ -24,7 +24,7 @@ parser.add_argument('--save_path', default="./../",
 parser.add_argument('--camera_ids', nargs='+', type=int, default=(2,4),
                     help='Array of cameras_ids')
 
-parser.add_argument('--cameras_frame_shape', nargs='+', type=int, default=(1600, 960),
+parser.add_argument('--cameras_frame_shape', nargs='+', type=int, default=(1024, 768),
                     help='Expected frame shape w h')
 
 parser.add_argument('--board_shape', nargs='+', type=int, default=(7, 5),
@@ -103,11 +103,19 @@ def main():
     while(True):
         # Capture the video frame
         # by frame
-        ret, frame_left = left_cam.read()
-        ret1, frame_right = right_cam.read()
-        
+
+        for i in range(10):
+            left_cam.grab()
+            right_cam.grab()
+
+        ret, frame_left = left_cam.retrieve()
+        ret1, frame_right = left_cam.retrieve()
+
         if(not ret or not ret1):
           continue
+
+        frame_left = cv2.cvtColor(frame_left, cv2.COLOR_YUV2BGR_YUY2) 
+        frame_right = cv2.cvtColor(frame_right, cv2.COLOR_YUV2BGR_YUY2) 
         
         frame_left_copy = np.copy(frame_left)
         frame_right_copy = np.copy(frame_right)
@@ -116,8 +124,6 @@ def main():
 
         gray_left = cv2.cvtColor(frame_left, cv2.COLOR_BGR2GRAY)
         gray_right = cv2.cvtColor(frame_right, cv2.COLOR_BGR2GRAY)
-
-
 
         corners_left,  ids_left,  rejectedCorners1 = arucoDetector.detectMarkers(gray_left)
         corners_right, ids_right, rejectedCorners2 = arucoDetector.detectMarkers(gray_right)
@@ -156,8 +162,8 @@ def main():
                             collected_frames += 1 
 
                              #Saving frames
-                            cv2.imwrite(left_cam_save_path + "/" + str(collected_frames) + ".png", frame_left)
-                            cv2.imwrite(right_cam_save_path + "/" + str(collected_frames) + ".png", frame_right)
+                            cv2.imwrite(left_cam_save_path + "/" + str(collected_frames) + ".bmp", frame_left)
+                            cv2.imwrite(right_cam_save_path + "/" + str(collected_frames) + ".bmp", frame_right)
 
 
                         if is_good_sample(params_l, db_left, args.threshold) or is_good_sample(params_r, db_right, args.threshold):
@@ -173,8 +179,8 @@ def main():
                             collected_frames += 1 
 
                              #Saving frames
-                            cv2.imwrite(left_cam_save_path + "/" + str(collected_frames) + ".png", frame_left)
-                            cv2.imwrite(right_cam_save_path + "/" + str(collected_frames) + ".png", frame_right)
+                            cv2.imwrite(left_cam_save_path + "/" + str(collected_frames) + ".bmp", frame_left)
+                            cv2.imwrite(right_cam_save_path + "/" + str(collected_frames) + ".bmp", frame_right)
 
 
                             print('left')

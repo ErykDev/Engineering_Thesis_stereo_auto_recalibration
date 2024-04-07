@@ -25,5 +25,5 @@ python3 ./Calibration_Code_Charuko/collect_images.py --save_path $COLLECTED_FRAM
 ENDING_CALIB_PATH=$MAIN_Dir/ENDING_Calibration
 mkdir -p $ENDING_CALIB_PATH;
 
-echo "Starting collection of end callibration frames" 
-python3 ./Calibration_Code_Charuko/live_stereo_calibration_collector.py --save_path $ENDING_CALIB_PATH/
+#echo "Starting collection of end callibration frames" 
+#python3 ./Calibration_Code_Charuko/live_stereo_calibration_collector.py --save_path $ENDING_CALIB_PATH/
