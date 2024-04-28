@@ -23,7 +23,7 @@ parser.add_argument('--camera_ids', nargs='+', type=int, default=(2,4),
 parser.add_argument('--cameras_frame_shape', nargs='+', type=int, default=(1024, 768),
                     help='Expected frame shape w h')
 
-parser.add_argument('--collection_freq', type=int, default=5,
+parser.add_argument('--collection_freq', type=int, default=1,
                     help='time in sec collection frequency')
 
 args = parser.parse_args()
@@ -45,22 +45,18 @@ def display_thread(left_cam, right_cam, camera_lock, break_lock):
 
 
         # https://stackoverflow.com/questions/21671139/how-to-synchronize-two-usb-cameras-to-use-them-as-stereo-camera
-        #for i in range(10):
-        #    left_cam.grab()
-        #    right_cam.grab()
+        for i in range(10):
+            left_cam.grab()
+            right_cam.grab()
         _, frame_left = left_cam.read()
         _, frame_right = right_cam.read()
 
-        #frame_left.release()
-        #frame_right.release()
-
-        frame_left = cv2.cvtColor(frame_left, cv2.COLOR_YUV2BGRA_YUY2) 
-        frame_right = cv2.cvtColor(frame_right, cv2.COLOR_YUV2BGRA_YUY2) 
+        
+        frame_left = cv2.cvtColor(frame_left, cv2.COLOR_YUV2BGR_YUY2) 
+        frame_right = cv2.cvtColor(frame_right, cv2.COLOR_YUV2BGR_YUY2) 
 
         camera_lock.release()
         
-        print(frame_left.shape)
-
         frame = cv2.hconcat((frame_left, frame_right))
         frame = cv2.resize(frame, (int(frame.shape[1]/ 1.2), int(frame.shape[0]/ 1.2)))
 
@@ -85,15 +81,12 @@ def saveing_thread(left_cam, right_cam, camera_lock, break_lock, left_cam_save_p
 
         camera_lock.acquire()
         
-        #for i in range(10):
-        #    left_cam.grab()
-        #    right_cam.grab()
+        for i in range(10):
+            left_cam.grab()
+            right_cam.grab()
 
         ret, frame_left = left_cam.read()
         ret1, frame_right = right_cam.read()
-
-        #frame_left.release()
-        #frame_right.release()
 
         frame_left = cv2.cvtColor(frame_left, cv2.COLOR_YUV2BGRA_YUY2) 
         frame_right = cv2.cvtColor(frame_right, cv2.COLOR_YUV2BGRA_YUY2) 

@@ -95,21 +95,18 @@ def main():
     if(not path.exists(right_cam_save_path)):
         os.mkdir(right_cam_save_path)
 
-
     corner_ids = cornerIds(args.board_shape)
-
 
     # Main loop
     while(True):
         # Capture the video frame
         # by frame
-
         for i in range(10):
             left_cam.grab()
             right_cam.grab()
 
         ret, frame_left = left_cam.retrieve()
-        ret1, frame_right = left_cam.retrieve()
+        ret1, frame_right = right_cam.retrieve()
 
         if(not ret or not ret1):
           continue
@@ -120,8 +117,6 @@ def main():
         frame_left_copy = np.copy(frame_left)
         frame_right_copy = np.copy(frame_right)
 
-        #print(frame_right_copy.shape)
-
         gray_left = cv2.cvtColor(frame_left, cv2.COLOR_BGR2GRAY)
         gray_right = cv2.cvtColor(frame_right, cv2.COLOR_BGR2GRAY)
 
@@ -130,12 +125,10 @@ def main():
 
         if len(corners_left) > 4:
             aruco.refineDetectedMarkers(gray_left, board, corners_left, ids_left, rejectedCorners1)
-                
             frame_left_copy = aruco.drawDetectedMarkers(frame_left_copy, corners_left, ids_left)
 
         if len(corners_right) > 4:
             aruco.refineDetectedMarkers(gray_right, board, corners_right, ids_right, rejectedCorners2)
-                
             frame_right_copy = aruco.drawDetectedMarkers(frame_right_copy, corners_right, ids_right)
                  
         
