@@ -7,7 +7,7 @@ from client_utils import *
 from SuperGlue.scoring_module import score_match, draw_matches
 
 from SuperGlue.recalibration_module import calculate_rotation
-from SuperGlue.matching_module import get_matched_fetures_super_glue
+from automatic_recalibration_grayscale.matching_module import get_matched_fetures_super_glue
 
 from utils import *
 from threading import Thread, Lock
@@ -158,7 +158,6 @@ while(True):
                       stereo_module_coeff, 
                       (w, h), 
                       lock)).start()
-
 
     # Lock for accesing projection matrices
     lock.acquire()

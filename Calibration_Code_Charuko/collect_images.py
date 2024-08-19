@@ -45,15 +45,15 @@ def display_thread(left_cam, right_cam, camera_lock, break_lock):
 
 
         # https://stackoverflow.com/questions/21671139/how-to-synchronize-two-usb-cameras-to-use-them-as-stereo-camera
-        for i in range(10):
-            left_cam.grab()
-            right_cam.grab()
+        #for i in range(10):
+        left_cam.grab()
+        right_cam.grab()
         _, frame_left = left_cam.read()
         _, frame_right = right_cam.read()
 
         
-        frame_left = cv2.cvtColor(frame_left, cv2.COLOR_YUV2BGR_YUY2) 
-        frame_right = cv2.cvtColor(frame_right, cv2.COLOR_YUV2BGR_YUY2) 
+        #frame_left = cv2.cvtColor(frame_left, cv2.COLOR_YUV2BGR_YUY2) 
+        #frame_right = cv2.cvtColor(frame_right, cv2.COLOR_YUV2BGR_YUY2) 
 
         camera_lock.release()
         
@@ -81,15 +81,15 @@ def saveing_thread(left_cam, right_cam, camera_lock, break_lock, left_cam_save_p
 
         camera_lock.acquire()
         
-        for i in range(10):
-            left_cam.grab()
-            right_cam.grab()
+        #for i in range(10):
+        left_cam.grab()
+        right_cam.grab()
 
         ret, frame_left = left_cam.read()
         ret1, frame_right = right_cam.read()
 
-        frame_left = cv2.cvtColor(frame_left, cv2.COLOR_YUV2BGRA_YUY2) 
-        frame_right = cv2.cvtColor(frame_right, cv2.COLOR_YUV2BGRA_YUY2) 
+        #frame_left = cv2.cvtColor(frame_left, cv2.COLOR_YUV2BGRA_YUY2) 
+        #frame_right = cv2.cvtColor(frame_right, cv2.COLOR_YUV2BGRA_YUY2) 
 
         camera_lock.release()
         

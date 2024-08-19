@@ -6,6 +6,7 @@ __pycache__/
 # C extensions
 *.so
 
+Collected_Scenes/*
 
 automatic_recalibration_grayscale/model.ckpt
 

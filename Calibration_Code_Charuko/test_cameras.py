@@ -28,7 +28,7 @@ def main():
         left_cam.grab()
         _, frame_left = left_cam.read()
 
-        frame = cv2.cvtColor(frame_left, cv2.COLOR_YUV2BGR_YUY2) 
+        frame = frame_left #cv2.cvtColor(frame_left, cv2.COLOR_YUV2BGR_YUY2) 
 
         cv2.imshow('Preview left', frame)
         k = cv2.waitKey(1)
@@ -42,7 +42,7 @@ def main():
         #_, frame_left = left_cam.read()
         _, frame_right = right_cam.read()
 
-        frame = cv2.cvtColor(frame_right, cv2.COLOR_YUV2BGR_YUY2) 
+        frame = frame_right #cv2.cvtColor(frame_right, cv2.COLOR_YUV2BGR_YUY2) 
 
         cv2.imshow('Preview right', frame)
         k = cv2.waitKey(1)

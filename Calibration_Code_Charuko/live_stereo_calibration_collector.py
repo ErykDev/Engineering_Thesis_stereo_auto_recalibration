@@ -15,7 +15,7 @@ parser = argparse.ArgumentParser(description='live_frame_collector')
 parser.add_argument('--threshold', type=float, default=0.2,
                     help='detection quality threshold')
 
-parser.add_argument('--difficulty_mulitpl', type=int, default=50,
+parser.add_argument('--difficulty_mulitpl', type=int, default=80,
                     help='detection quality threshold')
 
 parser.add_argument('--save_path', default="./../",
@@ -30,7 +30,7 @@ parser.add_argument('--cameras_frame_shape', nargs='+', type=int, default=(1024,
 parser.add_argument('--board_shape', nargs='+', type=int, default=(7, 5),
                     help='expected board shape')
 
-parser.add_argument("--calculate", help="make calculation insted of just collecting")
+parser.add_argument("-c","--calculate", action="store_true", help="make calculation insted of just collecting")
 
 parser.add_argument('--checker_size_mm', type=int, default=38,
                     help='expected board shape')
@@ -101,9 +101,9 @@ def main():
     while(True):
         # Capture the video frame
         # by frame
-        for i in range(10):
-            left_cam.grab()
-            right_cam.grab()
+        #for i in range(10):
+        left_cam.grab()
+        right_cam.grab()
 
         ret, frame_left = left_cam.retrieve()
         ret1, frame_right = right_cam.retrieve()
@@ -111,8 +111,8 @@ def main():
         if(not ret or not ret1):
           continue
 
-        frame_left = cv2.cvtColor(frame_left, cv2.COLOR_YUV2BGR_YUY2) 
-        frame_right = cv2.cvtColor(frame_right, cv2.COLOR_YUV2BGR_YUY2) 
+        #frame_left = cv2.cvtColor(frame_left, cv2.COLOR_YUV2BGR_YUY2) 
+        #frame_right = cv2.cvtColor(frame_right, cv2.COLOR_YUV2BGR_YUY2) 
         
         frame_left_copy = np.copy(frame_left)
         frame_right_copy = np.copy(frame_right)
@@ -265,6 +265,8 @@ def main():
 
                             np.savetxt(kalib_folder + 'R.txt', R)
                             np.savetxt(kalib_folder + 'T.txt', T)
+
+                            np.savetxt(kalib_folder + 'err.txt', np.array(ret))
 
 
         decimator+=1

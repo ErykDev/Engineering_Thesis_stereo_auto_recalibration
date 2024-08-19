@@ -15,7 +15,7 @@ echo "Starting camer preview"
 python3 ./Calibration_Code_Charuko/test_cameras.py
 
 echo "Starting collection of strarting callibration frames" 
-python3 ./Calibration_Code_Charuko/live_stereo_calibration_collector.py --save_path $STARTING_CALIB_PATH/
+python3 ./Calibration_Code_Charuko/live_stereo_calibration_collector.py -c --save_path $STARTING_CALIB_PATH/
 
 
 COLLECTED_FRAMES_PATH=$MAIN_Dir/Frames
@@ -28,4 +28,4 @@ ENDING_CALIB_PATH=$MAIN_Dir/ENDING_Calibration
 mkdir -p $ENDING_CALIB_PATH;
 
 echo "Starting collection of end callibration frames" 
-python3 ./Calibration_Code_Charuko/live_stereo_calibration_collector.py --save_path $ENDING_CALIB_PATH/
+python3 ./Calibration_Code_Charuko/live_stereo_calibration_collector.py -c --save_path $ENDING_CALIB_PATH/ 
